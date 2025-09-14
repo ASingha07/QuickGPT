@@ -35,7 +35,7 @@ export const stripeWebhooks = async (request, response) => {
 
                     // Update credit payment status
                     transaction.isPaid = true;
-                    await transaction.save()
+                    await transaction.save();
                 } else {
                     return response.json({ received: true, message: "Ignored event: Invalid app" })
                 }
