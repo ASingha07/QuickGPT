@@ -67,7 +67,7 @@ const Sidebar = ({ isMenuOpen, setIsMenuOpen }) => {
                                 </p>
                                 <p className='text-xs text-gray-500 dark:text-[#B1A6C0]'>{moment(chat.updatedAt).fromNow()}</p>
                             </div>
-                            <img src={assets.bin_icon} alt='Delete' className='hidden group-hover:block w-4 cursor-pointer not-dark:invert' onClick={e => toast.promise(deleteChat(e, chat._id), {loading: 'deleting...'})} />
+                            <img src={assets.bin_icon} alt='Delete' className='w-4 cursor-pointer not-dark:invert block' onClick={e => toast.promise(deleteChat(e, chat._id), {loading: 'deleting...'})} />
                         </div>
                     ))
                 }
