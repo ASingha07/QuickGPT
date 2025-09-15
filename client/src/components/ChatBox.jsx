@@ -2,12 +2,13 @@ import React, { useEffect, useRef, useState } from 'react'
 import { useAppContext } from '../context/AppContext';
 import { assets } from '../assets/assets';
 import Message from './Message';
+import toast from 'react-hot-toast';
 
 const ChatBox = () => {
 
     const containerRef = useRef(null)
 
-    const { selectedChat, theme } = useAppContext();
+    const { selectedChat, theme, user, axios, token, setUser } = useAppContext();
 
     const [message, setMessage] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -15,8 +16,36 @@ const ChatBox = () => {
     const [mode, setMode] = useState('text');
     const [isPublished, setIsPublished] = useState(false);
 
-    const onSubmit = (e) => {
-        e.preventDefault();
+    const onSubmit = async (e) => {
+        try {
+            e.preventDefault();
+            if (!user) return toast("Please login to send a message");
+            setLoading(true);
+            const promptCopy = prompt;
+            setPrompt('');
+            setMessage(prev => [...prev, { role: 'user', message: prompt, timestamp: Date.now(), isImage: false }]);
+
+            const { data } = await axios.post(`/api/message/${mode}`, { chatId: selectedChat._id, prompt, isPublished }, { headers: { Authorization: token } })
+
+            if (data.success) {
+                setMessage(prev => [...prev, data.reply])
+                // Update the user credits
+                if (mode === 'image') {
+                    setUser(prev => ({ ...prev, credits: prev.credits - 2 }));
+                } else {
+                    setUser(prev => ({ ...prev, credits: prev.credits - 1 }));
+                }
+            } else {
+                toast.error(data.message);
+                setPrompt(promptCopy);
+            }
+
+        } catch (error) {
+            toast.error(error.message);
+        } finally {
+            setPrompt('');
+            setLoading(false);
+        }
     }
 
     useEffect(() => {
@@ -26,7 +55,7 @@ const ChatBox = () => {
     }, [selectedChat]);
 
     useEffect(() => {
-        if (containerRef.current) { 
+        if (containerRef.current) {
             containerRef.current.scrollTo({
                 top: containerRef.current.scrollHeight,
                 behavior: 'smooth'
@@ -66,7 +95,7 @@ const ChatBox = () => {
             )}
 
             {/* Prompt Input Box  */}
-            <from onSubmit={onSubmit} className="bg-primary/20 dark:bg-[#583C79]/30 border border-primary dark:border-[#80609F]/30 rounded-full w-full max-w-2xl p-3 pl-4 mx-auto flex items-center gap-4">
+            <form onSubmit={onSubmit} className="bg-primary/20 dark:bg-[#583C79]/30 border border-primary dark:border-[#80609F]/30 rounded-full w-full max-w-2xl p-3 pl-4 mx-auto flex items-center gap-4">
                 <select onChange={(e) => setMode(e.target.value)} value={mode} className='text-sm pl-3 pr-2 outline-none'>
                     <option className='dark:bg-purple-900' value="text">Text</option>
                     <option className='dark:bg-purple-900' value="image">Image</option>
@@ -75,7 +104,7 @@ const ChatBox = () => {
                 <button disabled={loading}>
                     <img src={loading ? assets.stop_icon : assets.send_icon} className='w-8 cursor-pointer' />
                 </button>
-            </from>
+            </form>
         </div>
     )
 }
